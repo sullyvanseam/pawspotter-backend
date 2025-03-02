@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-r53$v$o6-cs)z=j^pnh^0y(igj4g)+$43sp0!=3u5+ncs%57(m
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ["pawspotter.onrender.com", "localhost"]
+ALLOWED_HOSTS = ["pawspotter-backend.onrender.com", "localhost"]
 
 
 # Application definition
