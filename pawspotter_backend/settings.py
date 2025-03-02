@@ -26,8 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-r53$v$o6-cs)z=j^pnh^0y(igj4g)+$43sp0!=3u5+ncs%57(m'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False") == "True"
-
+DEBUG = True
 ALLOWED_HOSTS = ["pawspotter.onrender.com", "localhost"]
 
 
