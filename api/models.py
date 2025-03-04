@@ -5,8 +5,9 @@ from django.contrib.auth.models import User
 
 def unique_filename(instance, filename):
     """Generates a unique filename for uploaded images"""
-    ext = filename.split('.')[-1]  # Get the file extension
-    filename = f"{uuid.uuid4().hex}.{ext}"  # Generate a unique filename
+    ext = filename.split('.')[-1] 
+    unique_name = f"{uuid.uuid4().hex}.{ext}"  
+    return os.path.join("dog_reports/", unique_name) 
 
 
 class DogReport(models.Model):
