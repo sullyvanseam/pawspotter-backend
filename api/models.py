@@ -28,6 +28,7 @@ class DogReport(models.Model):
             ('Lost', 'Lost'),
         ]
     )
+    description = models.TextField(blank=True, null=True)  
     image = models.ImageField(upload_to=unique_filename, blank=True, null=True)  
     created_at = models.DateTimeField(auto_now_add=True)
 
