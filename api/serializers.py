@@ -1,3 +1,4 @@
+import requests
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import DogReport, DogStatus, Comment
@@ -23,14 +24,42 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class DogReportSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()  # Ensure image URL is returned
+
     class Meta:
         model = DogReport
         fields = '__all__'
 
     def get_image(self, obj):
+        """ Returns the full URL for the image """
         if obj.image:
-            return obj.image.url  
+            return obj.image.url
         return None
+
+    def create(self, validated_data):
+        """ Automatically fetch location name from coordinates before saving """
+        latitude = validated_data.get("latitude")
+        longitude = validated_data.get("longitude")
+
+        if latitude and longitude:
+            validated_data["location"] = self.get_location_from_coordinates(latitude, longitude)
+
+        return DogReport.objects.create(**validated_data)
+
+    def get_location_from_coordinates(self, latitude, longitude):
+        """ Reverse geocode coordinates to fetch city/region """
+        try:
+            response = requests.get(
+                f"https://nominatim.openstreetmap.org/reverse?lat={latitude}&lon={longitude}&format=json"
+            )
+            data = response.json()
+            return data.get("address", {}).get("city") or \
+                   data.get("address", {}).get("town") or \
+                   data.get("address", {}).get("village") or \
+                   data.get("address", {}).get("state", "Unknown Location")
+        except Exception as e:
+            print(f"Error fetching location: {e}")
+        
 
 
 class DogStatusSerializer(serializers.ModelSerializer):
