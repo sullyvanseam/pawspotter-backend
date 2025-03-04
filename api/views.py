@@ -127,7 +127,7 @@ class DogStatusViewSet(viewsets.ModelViewSet):
 
 
 # ------------------------------
-# Comment API View
+# User Comments API View
 # ------------------------------
 
 class CommentViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,12 @@
+import os
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
+
+def unique_filename(instance, filename):
+    """Generates a unique filename for uploaded images"""
+    ext = filename.split('.')[-1]  # Get the file extension
+    filename = f"{uuid.uuid4().hex}.{ext}"  # Generate a unique filename
 
 
 class DogReport(models.Model):
@@ -20,7 +27,7 @@ class DogReport(models.Model):
             ('Lost', 'Lost'),
         ]
     )
-    image = models.ImageField(upload_to='dog_reports/', blank=True, null=True)  
+    image = models.ImageField(upload_to=unique_filename, blank=True, null=True)  
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
