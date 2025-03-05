@@ -106,24 +106,32 @@ class DogReportViewSet(viewsets.ModelViewSet):
     API view for managing dog reports.
     Allows users to create, view, update, and delete reports.
     """
-    queryset = DogReport.objects.all().order_by('-created_at')  # Newest reports first
+    queryset = DogReport.objects.all().order_by('-created_at')
     serializer_class = DogReportSerializer
-    permission_classes = [permissions.AllowAny]  # Public access
-    parser_classes = (MultiPartParser, FormParser)  # Allows file uploads
+    permission_classes = [permissions.AllowAny]
+    parser_classes = (MultiPartParser, FormParser)
 
-    # Enable filtering in API requests
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['condition', 'user', 'created_at']
 
     def perform_create(self, serializer):
         """
         Assigns the report to the authenticated user if logged in.
-        Otherwise, allows anonymous users to submit reports.
+        Otherwise, assigns the user from request data.
         """
+        user = None
+
         if self.request.user.is_authenticated:
-            serializer.save(user=self.request.user)
+            user = self.request.user
         else:
-            serializer.save(user=None)  # Allows anonymous reporting
+            user_id = self.request.data.get("user")  # Get user ID from request body
+            if user_id:
+                try:
+                    user = User.objects.get(id=user_id)  # Fetch user from DB
+                except User.DoesNotExist:
+                    return Response({"error": "User not found."}, status=400)
+
+        serializer.save(user=user)  # Save report with user (or None if anonymous)
 
 
 # ------------------------------
