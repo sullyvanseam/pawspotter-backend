@@ -141,6 +141,48 @@ class DogReportViewSet(viewsets.ModelViewSet):
 class DogStatusViewSet(viewsets.ModelViewSet):
     """
     API view for managing dog statuses.
+    Open access: Anyone can view, create, update, and delete statuses.
+    """
+    queryset = DogStatus.objects.all()
+    serializer_class = DogStatusSerializer
+
+    def perform_create(self, serializer):
+        """
+        Ensures that each dog report has only one status.
+        """
+        dog_report = serializer.validated_data.get("dog_report")
+
+        if DogStatus.objects.filter(dog_report=dog_report).exists():
+            raise ValidationError({"error": "Status already exists for this dog report."})
+
+    """
+    API view for managing dog statuses.
+    """
+    queryset = DogStatus.objects.all()
+    serializer_class = DogStatusSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Only logged-in users can access
+
+    def perform_create(self, serializer):
+        """
+        Ensures that each dog report has only one status.
+        """
+        dog_report = serializer.validated_data.get("dog_report")
+
+        if DogStatus.objects.filter(dog_report=dog_report).exists():
+            raise ValidationError({"error": "Status already exists for this dog report."})
+
+        serializer.save()
+
+    def update(self, request, *args, **kwargs):
+        """
+        Restricts updates to staff members only.
+        """
+        if not request.user.is_staff:
+            return Response({"error": "Only staff members can update dog statuses."}, status=403)
+
+        return super().update(request, *args, **kwargs)
+    """
+    API view for managing dog statuses.
     Only authenticated users can view, and only staff can update.
     """
     queryset = DogStatus.objects.all()
