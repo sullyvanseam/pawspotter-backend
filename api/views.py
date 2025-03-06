@@ -1,7 +1,7 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
-
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import viewsets, permissions, generics, status
@@ -141,10 +141,11 @@ class DogReportViewSet(viewsets.ModelViewSet):
 class DogStatusViewSet(viewsets.ModelViewSet):
     """
     API view for managing dog statuses.
-    Tracks vaccination, rescue status, and additional notes.
+    Only authenticated users can view, and only staff can update.
     """
     queryset = DogStatus.objects.all()
     serializer_class = DogStatusSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Only logged-in users can access
 
     def perform_create(self, serializer):
         """
@@ -153,14 +154,18 @@ class DogStatusViewSet(viewsets.ModelViewSet):
         dog_report = serializer.validated_data.get("dog_report")
 
         if DogStatus.objects.filter(dog_report=dog_report).exists():
-            return Response(
-                {"error": "Status already exists for this dog report."},
-                status=400
-            )
+            raise ValidationError({"error": "Status already exists for this dog report."})
 
         serializer.save()
 
+    def update(self, request, *args, **kwargs):
+        """
+        Restricts updates to staff members only.
+        """
+        if not request.user.is_staff:
+            return Response({"error": "Only staff members can update dog statuses."}, status=403)
 
+        return super().update(request, *args, **kwargs)
 # ------------------------------
 # User Comments API View
 # ------------------------------
