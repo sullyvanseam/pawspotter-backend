@@ -168,9 +168,20 @@ class CommentViewSet(viewsets.ModelViewSet):
     API view for managing comments on dog reports.
     Users (or anonymous) can leave comments related to a report.
     """
-    queryset = Comment.objects.all().order_by('-created_at')  # Sort comments by newest first
     serializer_class = CommentSerializer
     permission_classes = [permissions.AllowAny]  # Allows both logged-in & anonymous users
+
+    def get_queryset(self):
+        """
+        Filters comments by dog_report if provided in query params.
+        Otherwise, returns all comments sorted by newest first.
+        """
+        dog_report_id = self.request.query_params.get('dog_report', None)
+
+        if dog_report_id is not None:
+            return Comment.objects.filter(dog_report=dog_report_id).order_by('-created_at')
+
+        return Comment.objects.all().order_by('-created_at')
 
     def perform_create(self, serializer):
         """
