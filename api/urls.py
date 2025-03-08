@@ -6,7 +6,7 @@ from .views import DogReportViewSet, RegisterView, LoginView, LogoutView, DogSta
 router = DefaultRouter()
 router.register(r'dogs', DogReportViewSet)  # Creates routes for all CRUD operations
 router.register(r'status', DogStatusViewSet)  # API for dog statuses
-router.register(r'comments', CommentViewSet)  # API for comments
+router.register(r'comments', CommentViewSet, basename="comments")   # API for comments
 
 urlpatterns = [
     path('', include(router.urls)),
