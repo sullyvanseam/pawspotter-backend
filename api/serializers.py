@@ -29,7 +29,7 @@ class DogReportSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         if obj.image:
-            return obj.image.url  
+            return obj.image.url
         return None
 
 
@@ -40,13 +40,13 @@ class DogStatusSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField() 
-    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M")  
+    user = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ['id', 'dog_report', 'user', 'text', 'created_at'] 
+        fields = ['id', 'dog_report', 'user', 'text', 'created_at']
+        read_only_fields = ['created_at', 'user']
 
     def get_user(self, obj):
-        """Return the username if available, otherwise 'Anonymous'"""
+        """Return the username or 'Anonymous' if no user is attached"""
         return obj.user.username if obj.user else "Anonymous"
