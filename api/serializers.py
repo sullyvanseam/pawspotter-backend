@@ -40,6 +40,13 @@ class DogStatusSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField() 
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M")  
+
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ['id', 'dog_report', 'user', 'text', 'created_at'] 
+
+    def get_user(self, obj):
+        """Return the username if available, otherwise 'Anonymous'"""
+        return obj.user.username if obj.user else "Anonymous"
