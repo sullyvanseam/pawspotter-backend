@@ -7,10 +7,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import viewsets, permissions, generics, status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 from .models import DogReport, DogStatus, Comment
 from .serializers import (
@@ -192,8 +188,5 @@ class CommentViewSet(viewsets.ModelViewSet):
         Otherwise, allows anonymous users to submit comments.
         """
         user = self.request.user if self.request.user.is_authenticated else None
-
-        # Debugging log to check if Django is recognizing the user
-        logger.info(f"🔍 User Posting Comment: {self.request.user} (Authenticated: {self.request.user.is_authenticated})")
 
         serializer.save(user=user)
