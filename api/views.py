@@ -7,6 +7,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import viewsets, permissions, generics, status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.hashers import make_password
+from rest_framework.views import APIView
+
+
 
 from .models import DogReport, DogStatus, Comment
 from .serializers import (
@@ -24,76 +30,68 @@ from .serializers import (
 
 class RegisterView(generics.CreateAPIView):
     """
-    API view for user registration.
-    Allows new users to create an account and receive a JWT token.
+    API view to handle user registration.
     """
-    queryset = User.objects.all()
     serializer_class = RegisterSerializer
-    permission_classes = [AllowAny]  # Publicly accessible
+    permission_classes = [AllowAny]
 
-    def post(self, request):
-        """
-        Handles user registration and returns JWT tokens.
-        """
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({
+                "token": token.key,
+                "user": UserSerializer(user).data  # Returns structured user details
+            }, status=201)
+        return Response(serializer.errors, status=400)
+    permission_classes = [AllowAny]
 
-            # Generate JWT token for the new user
-            refresh = RefreshToken.for_user(user)
-            return Response(
-                {
-                    "message": "Registration successful",
-                    "user": UserSerializer(user).data,
-                    "access_token": str(refresh.access_token),
-                    "refresh_token": str(refresh)
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LoginView(generics.GenericAPIView):
-    """
-    API view for user login.
-    Authenticates users and returns user data with JWT token if successful.
-    """
-    permission_classes = [AllowAny] 
-
-    def post(self, request):
-        """
-        Handles user authentication and login.
-        """
+    def post(self, request, *args, **kwargs):
         username = request.data.get("username")
+        email = request.data.get("email")
         password = request.data.get("password")
-        user = authenticate(username=username, password=password)
 
-        if user:
-            refresh = RefreshToken.for_user(user)  # Generate JWT tokens
-            return Response(
-                {
-                    "message": "Login successful",
-                    "user": UserSerializer(user).data,
-                    "access_token": str(refresh.access_token),
-                    "refresh_token": str(refresh)
-                },
-                status=status.HTTP_200_OK,
-            )
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+        if not username or not email or not password:
+            return Response({"error": "All fields are required."}, status=400)
+
+        if User.objects.filter(username=username).exists():
+            return Response({"error": "Username already taken."}, status=400)
+
+        user = User.objects.create(
+            username=username,
+            email=email,
+            password= make_password(password)
+        )
+        token, created = Token.objects.get_or_create(user=user)
+
+        return Response({"token": token.key, "user": {"id": user.id, "username": user.username}}, status=201)
 
 
-class LogoutView(generics.GenericAPIView):
+class LoginView(ObtainAuthToken):
     """
-    API view for user logout.
-    In a token-based system, logout is handled on the frontend by deleting tokens.
+    API view to handle user login.
+    Returns a token and user details on successful authentication.
+    """
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        token = Token.objects.get(key=response.data["token"])
+        user = token.user
+        return Response({
+            "token": token.key,
+            "user": UserSerializer(user).data  # Returns structured user details
+        })
+
+
+class LogoutView(APIView):
+    """
+    API view to log out a user by deleting their authentication token.
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        """
-        The frontend should delete the stored token upon logout.
-        """
-        return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
+        request.auth.delete()  # Deletes the token from the database
+        return Response({"message": "Logged out successfully."}, status=200)
 
 
 # ------------------------------
